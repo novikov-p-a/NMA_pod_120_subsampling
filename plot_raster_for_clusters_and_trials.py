@@ -50,7 +50,7 @@ def plot_raster_for_ROIclusters_and_trials(
         ROIname = "visual", # "visual" or "motor"
         path="D:\\NMA\\steinmetz_full", # default for: full path to folder with full Steinmetz dataset
         mice_and_date="Cori_2016-12-14", # default for: 1-day 1-mice dataset folder name
-        trial_nums = [0,1,2,3,4,5,6,7,8,9], # default for: array of selected trials. If [-1] then all trials
+        trial_nums = [18,19], # default for: array of selected trials. If [-1] then all trials
         ):
     
     dir = path + "\\" + mice_and_date + "\\"    
@@ -134,7 +134,13 @@ def plot_raster_for_clusters_and_trials(
     trials_intervals = npyload(dir, "trials.intervals")
     trials_goCue_times = npyload(dir, "trials.goCue_times")
     trials_feedback_times = npyload(dir, "trials.feedback_times")
-    trials_visualStim_times = npyload(dir, "trials.visualStim_times")    
+    trials_visualStim_times = npyload(dir, "trials.visualStim_times")  
+    
+    trials_response_choice = npyload(dir, "trials.response_choice")
+    trials_response_times = npyload(dir, "trials.response_times")
+    trials_visualStim_contrastLeft = npyload(dir, "trials.visualStim_contrastLeft")
+    trials_visualStim_contrastRight = npyload(dir, "trials.visualStim_contrastRight")
+    
        
     # check how many spikes in each cluster
     uncl = np.unique(spike_clusters)
@@ -159,6 +165,7 @@ def plot_raster_for_clusters_and_trials(
             
     # select visual stim, cue and feedback times for selected trials
     stim_vlines = np.ndarray(len(trial_nums)) # visual stim
+    resp_vlines = np.ndarray(len(trial_nums)) # response
     cue_vlines = np.ndarray(len(trial_nums)) # goCue
     fb_vlines = np.ndarray(len(trial_nums)) # feedback
     start_vlines = np.ndarray(len(trial_nums)) # trial start
@@ -168,11 +175,13 @@ def plot_raster_for_clusters_and_trials(
         cue_vlines[i] = trials_goCue_times[trial_num]
         fb_vlines[i] = trials_feedback_times[trial_num]
         stim_vlines[i] = trials_visualStim_times[trial_num]
+        resp_vlines[i] = trials_response_times[trial_num]
         start_vlines[i] = trials_intervals[trial_num][0]
         finish_vlines[i] = trials_intervals[trial_num][1]
         i += 1
         
     fig, axs = plt.subplots(2, 1)
+    fig.patch.set_facecolor('lightgray')
             
     # plot raster
     if compress_yticks:
@@ -184,29 +193,42 @@ def plot_raster_for_clusters_and_trials(
     if show_trials_marks:        
         for vline in start_vlines:    
             if vline == start_vlines[0]:
-                axs[0].axvline(vline, color="cyan", label = 'trial boundaries') # plt.axvline(vline, color="cyan", label = 'trial boundaries')
-                axs[1].axvline(vline, color="cyan", label = 'trial boundaries') # plt.axvline(vline, color="cyan", label = 'trial boundaries')
-            axs[0].axvline(vline, color="cyan")
-            axs[1].axvline(vline, color="cyan")
+                axs[0].axvline(vline, color="lightgray", alpha=0.5, label = 'between trials') # plt.axvline(vline, color="cyan", label = 'trial boundaries')
+                axs[1].axvline(vline, color="lightgray", alpha=0.5) # plt.axvline(vline, color="cyan", label = 'trial boundaries')
+            axs[0].axvline(vline, color="lightgray", alpha=0.5)
+            axs[1].axvline(vline, color="lightgray", alpha=0.5)
         for vline in finish_vlines:        
-            axs[0].axvline(vline, color="cyan")        
-            axs[1].axvline(vline, color="cyan")        
+            axs[0].axvline(vline, color="lightgray", alpha=0.5)        
+            axs[1].axvline(vline, color="lightgray", alpha=0.5)
+            
+            
+        for i in range(len(start_vlines) - 1):
+            axs[0].axvspan(finish_vlines[i], start_vlines[i+1], facecolor='lightgray')
+            axs[1].axvspan(finish_vlines[i], start_vlines[i+1], facecolor='lightgray')
+
+                
         for vline in stim_vlines:
             if vline == stim_vlines[0]:
                 axs[0].axvline(vline, color="red", label = 'visual stimulus')
-                axs[1].axvline(vline, color="red", label = 'visual stimulus')
+                axs[1].axvline(vline, color="red")
             axs[0].axvline(vline, color="red")
             axs[1].axvline(vline, color="red")
+        for vline in resp_vlines:
+            if vline == resp_vlines[0]:
+                axs[0].axvline(vline, color="blue", linestyle='--', dashes=(5, 5), label = 'response')
+                axs[1].axvline(vline, color="blue", linestyle='--', dashes=(5, 5))
+            axs[0].axvline(vline, color="blue", linestyle='--', dashes=(5, 5))
+            axs[1].axvline(vline, color="blue", linestyle='--', dashes=(5, 5))
         for vline in cue_vlines:
             if vline == cue_vlines[0]:
                 axs[0].axvline(vline, color="orange", label = 'cue')
-                axs[1].axvline(vline, color="orange", label = 'cue')
+                axs[1].axvline(vline, color="orange")
             axs[0].axvline(vline, color="orange")
             axs[1].axvline(vline, color="orange")
         for vline in fb_vlines:
             if vline == fb_vlines[0]:
                 axs[0].axvline(vline, color="green", label = 'feedback')
-                axs[1].axvline(vline, color="green", label = 'feedback')
+                axs[1].axvline(vline, color="green")
             axs[0].axvline(vline, color="green")
             axs[1].axvline(vline, color="green")
     # tune plot
@@ -219,15 +241,8 @@ def plot_raster_for_clusters_and_trials(
         axs[1].set_title(mice_and_date) # plt.title(mice_and_date)
     else:
         axs[1].set_title(mice_and_date + ": " + plot_title) # plt.title(mice_and_date + ": " + plot_title)
-    axs[0].legend()
-    
-    
-    # stimuli:
-    
-    trials_visualStim_contrastLeft = npyload(dir, "trials.visualStim_contrastLeft")
-    trials_visualStim_contrastRight = npyload(dir, "trials.visualStim_contrastRight")
-    trials_response_choice = npyload(dir, "trials.response_choice")
-    
+    axs[0].legend(loc='upper right')
+
     # wheel position:
     
     wheel_position = npyload(dir, "wheel.position")
@@ -278,10 +293,14 @@ def plot_raster_for_clusters_and_trials(
     axs[0].set_ylabel("wheel position") #plt.ylabel("wheel position")
     axs[0].set_title(mice_and_date)
     
+    axs[0].set_xlim((start_vlines[0], finish_vlines[-1])) #plt.ylabel("wheel position")
+    axs[1].set_xlim((start_vlines[0], finish_vlines[-1])) #plt.ylabel("wheel position")
+    
     
     fig.tight_layout()
     plt.show()
 
-plot_raster_for_ROIclusters_and_trials(ROIname = "visual")
+plot_raster_for_ROIclusters_and_trials(ROIname = "motor")
+#plot_raster_for_ROIclusters_and_trials(mice_and_date="Moniz_2017-05-15", ROIname = "visual")
 #plot_raster_for_ROIclusters_and_trials(trial_nums=[-1])
 
