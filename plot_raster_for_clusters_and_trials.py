@@ -10,11 +10,12 @@ def tsvout(dir, fname):
         for line in tsvreader:
             print(line[1:])
 
-def npyload(dir, fname):
+def npyload(dir, fname, dataprint=False):
     print("=== " + fname + ".npy: ===")
     data = np.load(dir + fname + ".npy", allow_pickle=True)
     print("shape: ", data.shape)
-    print(data)
+    if dataprint:
+        print(data)
     return data
 
 # from SteinmetzHelpers.py
@@ -45,18 +46,17 @@ VisualROI = ('VISa', 'VISam', 'VISI', 'VISp', 'VISpm', 'VISrl')
 # Motor areas
 MotorROI = ('MOp', 'MOs')
 
-
 def plot_raster_for_ROIclusters_and_trials(
         ROIname = "visual", # "visual" or "motor"
         path="D:\\NMA\\steinmetz_full", # default for: full path to folder with full Steinmetz dataset
         mice_and_date="Cori_2016-12-14", # default for: 1-day 1-mice dataset folder name
-        trial_nums = [0,2,3,6], # default for: array of selected trials. If [-1] then all trials
+        trial_nums = [0,1,2,3,4,5,6,7,8,9], # default for: array of selected trials. If [-1] then all trials
         ):
     
     dir = path + "\\" + mice_and_date + "\\"    
         
-    channels_probe = npyload(dir, "channels.probe")
-    channels_site = npyload(dir, "channels.site")
+    #channels_probe = npyload(dir, "channels.probe")
+    #channels_site = npyload(dir, "channels.site")
     
     goodgoodcells, brain_region, br = get_good_cells(dir)
     
@@ -73,7 +73,7 @@ def plot_raster_for_ROIclusters_and_trials(
     spikes_times = npyload(dir, "spikes.times")
     spike_clusters = npyload(dir, "spikes.clusters")
     trials_intervals = npyload(dir, "trials.intervals")
-            
+                
     # Retrive spikes from ROIs 
     # Visual ROIs
     nspikes_visual = np.ndarray(len(clusters_visual))
@@ -135,7 +135,7 @@ def plot_raster_for_clusters_and_trials(
     trials_goCue_times = npyload(dir, "trials.goCue_times")
     trials_feedback_times = npyload(dir, "trials.feedback_times")
     trials_visualStim_times = npyload(dir, "trials.visualStim_times")    
-   
+       
     # check how many spikes in each cluster
     uncl = np.unique(spike_clusters)
     spikes_each_cluster = np.ndarray(len(uncl))
@@ -154,7 +154,7 @@ def plot_raster_for_clusters_and_trials(
                 spikes_icl_onetrial = spikes_icl_onetrial[spikes_icl_onetrial <= trials_intervals[trial_num][1]]
                 spikes_icl_seltrials = np.append(spikes_icl_seltrials, spikes_icl_onetrial)
             times_each_cluster[icl] = spikes_icl_seltrials        
-            print(times_each_cluster[icl].shape)
+            #print(times_each_cluster[icl].shape)
             i += 1
             
     # select visual stim, cue and feedback times for selected trials
@@ -171,46 +171,117 @@ def plot_raster_for_clusters_and_trials(
         start_vlines[i] = trials_intervals[trial_num][0]
         finish_vlines[i] = trials_intervals[trial_num][1]
         i += 1
+        
+    fig, axs = plt.subplots(2, 1)
             
     # plot raster
     if compress_yticks:
-        plt.eventplot(times_each_cluster[loc_uncl], color=".2")
+        axs[1].eventplot(times_each_cluster[loc_uncl], color=".2") # plt.eventplot(times_each_cluster[loc_uncl], color=".2")
     else:
-        plt.eventplot(times_each_cluster[loc_uncl], lineoffsets=cluster_nums, color=".2")
-    
+        axs[1].eventplot(times_each_cluster[loc_uncl], lineoffsets=cluster_nums, color=".2") #plt.eventplot(times_each_cluster[loc_uncl], lineoffsets=cluster_nums, color=".2")
+        
     # plot visual stim, cue and feedback times        
     if show_trials_marks:        
         for vline in start_vlines:    
             if vline == start_vlines[0]:
-                plt.axvline(vline, color="cyan", label = 'trial boundaries')
-            plt.axvline(vline, color="cyan")
+                axs[0].axvline(vline, color="cyan", label = 'trial boundaries') # plt.axvline(vline, color="cyan", label = 'trial boundaries')
+                axs[1].axvline(vline, color="cyan", label = 'trial boundaries') # plt.axvline(vline, color="cyan", label = 'trial boundaries')
+            axs[0].axvline(vline, color="cyan")
+            axs[1].axvline(vline, color="cyan")
         for vline in finish_vlines:        
-            plt.axvline(vline, color="cyan")        
+            axs[0].axvline(vline, color="cyan")        
+            axs[1].axvline(vline, color="cyan")        
         for vline in stim_vlines:
             if vline == stim_vlines[0]:
-                plt.axvline(vline, color="red", label = 'visual stimulus')
-            plt.axvline(vline, color="red")
+                axs[0].axvline(vline, color="red", label = 'visual stimulus')
+                axs[1].axvline(vline, color="red", label = 'visual stimulus')
+            axs[0].axvline(vline, color="red")
+            axs[1].axvline(vline, color="red")
         for vline in cue_vlines:
             if vline == cue_vlines[0]:
-                plt.axvline(vline, color="orange", label = 'cue')
-            plt.axvline(vline, color="orange")
+                axs[0].axvline(vline, color="orange", label = 'cue')
+                axs[1].axvline(vline, color="orange", label = 'cue')
+            axs[0].axvline(vline, color="orange")
+            axs[1].axvline(vline, color="orange")
         for vline in fb_vlines:
             if vline == fb_vlines[0]:
-                plt.axvline(vline, color="green", label = 'feedback')
-            plt.axvline(vline, color="green")
+                axs[0].axvline(vline, color="green", label = 'feedback')
+                axs[1].axvline(vline, color="green", label = 'feedback')
+            axs[0].axvline(vline, color="green")
+            axs[1].axvline(vline, color="green")
     # tune plot
-    plt.xlabel("time, s")
-    plt.ylabel("# cluster")
+    axs[1].set_xlabel("time, s")  #plt.xlabel("time, s")
+    axs[1].set_ylabel("# cluster") # plt.ylabel("# cluster")
     if show_each_ytick:
         if compress_yticks == False:
-            plt.yticks(cluster_nums);
+            axs[1].set_yticks(cluster_nums); # plt.yticks(cluster_nums);
     if plot_title == None:
-        plt.title(mice_and_date)
+        axs[1].set_title(mice_and_date) # plt.title(mice_and_date)
     else:
-        plt.title(mice_and_date + ": " + plot_title)
-    plt.legend()
+        axs[1].set_title(mice_and_date + ": " + plot_title) # plt.title(mice_and_date + ": " + plot_title)
+    axs[0].legend()
+    
+    
+    # stimuli:
+    
+    trials_visualStim_contrastLeft = npyload(dir, "trials.visualStim_contrastLeft")
+    trials_visualStim_contrastRight = npyload(dir, "trials.visualStim_contrastRight")
+    trials_response_choice = npyload(dir, "trials.response_choice")
+    
+    # wheel position:
+    
+    wheel_position = npyload(dir, "wheel.position")
+    wheel_timestamps = npyload(dir, "wheel.timestamps")    
+    wheelMoves_intervals = npyload(dir, "wheelMoves.intervals")  
+    
+    trials_intervals_sel = trials_intervals[trial_nums]
+    time_min = np.min(trials_intervals_sel)
+    time_max = np.max(trials_intervals_sel)
+        
+    wheel_pos_allticks = wheel_timestamps[1][0] - wheel_timestamps[0][0] + 1
+    wheel_pos_timestep = 0.01 # in seconds
+    wheel_pos_timestart = wheel_timestamps[0][1]
+    wheel_pos_timefinish = wheel_timestamps[1][1]
+    wheel_pos_alltime = wheel_pos_timefinish - wheel_pos_timestart
+    wheel_pos_alltimeticks = int(round(wheel_pos_alltime / wheel_pos_timestep))
+    wheel_position_in_time = np.ndarray(wheel_pos_alltimeticks, dtype=np.ndarray)
+    timetick = 0
+    for t in np.arange(wheel_pos_timestart, wheel_pos_timefinish, step=wheel_pos_timestep):
+        wheel_position_tick = int(round(wheel_pos_allticks * (t - wheel_pos_timestart) / wheel_pos_alltime))
+        if timetick < wheel_pos_alltimeticks:         
+            t_whpos_pair = []
+            t_whpos_pair = np.append(t_whpos_pair, t)
+            t_whpos_pair = np.append(t_whpos_pair, wheel_position[wheel_position_tick][0])
+            wheel_position_in_time[timetick] = t_whpos_pair
+        timetick += 1
+    
+    brush = 10
+    brush_mo = 1. / brush
+    
+    wheel_position_in_time_t = []
+    wheel_position_in_time_pos = []
+    for pos in wheel_position_in_time[::brush]:
+        wheel_position_in_time_t = np.append(wheel_position_in_time_t, pos[0])
+        wheel_position_in_time_pos = np.append(wheel_position_in_time_pos, pos[1])
+        
+    axs[0].axhline(0.0, color="black")
+        
+    for interval in trials_intervals_sel:
+        timetick1 =  int(round(brush_mo * (interval[0] - wheel_pos_timestart) / wheel_pos_timestep))
+        timetick2 =  int(round(brush_mo * (interval[1] - wheel_pos_timestart) / wheel_pos_timestep))
+        wheel_position_in_interval_t = wheel_position_in_time_t[(timetick1):timetick2]
+        wheel_position_in_interval_pos = wheel_position_in_time_pos[(timetick1):timetick2]
+        wheel_position_in_interval_pos = wheel_position_in_interval_pos - wheel_position_in_interval_pos[0]
+        axs[0].plot(wheel_position_in_interval_t, wheel_position_in_interval_pos, "magenta")  #plt.plot(wheel_position_in_interval_t, wheel_position_in_interval_pos, "magenta")
+        
+    axs[0].set_xlabel("time, s") #plt.xlabel("time, s")
+    axs[0].set_ylabel("wheel position") #plt.ylabel("wheel position")
+    axs[0].set_title(mice_and_date)
+    
+    
+    fig.tight_layout()
     plt.show()
 
-plot_raster_for_ROIclusters_and_trials(ROIname = "motor")
+plot_raster_for_ROIclusters_and_trials(ROIname = "visual")
 #plot_raster_for_ROIclusters_and_trials(trial_nums=[-1])
 
